@@ -1,3 +1,8 @@
+// Author - Dhruv Sheth
+// Email - dhruvsheth.linkit@gmail.com
+// Date Created - 5 Feb 2021
+// Open Sourced under MIT License. Use the code with comments to give credit to the author
+
 #include <Arduino_LPS22HB.h>
 #include <Arduino_HTS221.h>
 
