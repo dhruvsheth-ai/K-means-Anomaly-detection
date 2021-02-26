@@ -1,6 +1,3 @@
-// Created using EdgeImpulse. Modifications by Dhruv Sheth
-// For issues, head to forum.edgeimpulse.com
-
 #include <test_inference.h>
 #include <Arduino_LPS22HB.h>
 #include <Arduino_HTS221.h>
@@ -14,6 +11,27 @@ float features[EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE];
 size_t feature_ix = 0;
 
 static bool debug_nn = false;
+
+float anomalydata;
+
+
+typedef struct {
+  int anomaly;
+  int var1;
+  int var2;
+  int var3;
+  int var4;
+  int var5;
+  int var6;
+} WeatherData;
+
+// Forward declarations
+void getWeatherData(WeatherData &data);
+void sendWeatherData(const WeatherData &data);
+
+// Global variables
+char sendBuf[256];
+
 
 
 void setup()
@@ -36,6 +54,12 @@ void setup()
 
 void loop() {
     static unsigned long last_interval_ms = 0;
+    
+    WeatherData data;
+    getWeatherData(data);
+    sendWeatherData(data);
+    delay(3000);  
+
 
     if (millis() > last_interval_ms + INTERVAL_MS) {
         last_interval_ms = millis();
@@ -58,7 +82,7 @@ void loop() {
             numpy::signal_from_buffer(features, EI_CLASSIFIER_DSP_INPUT_FRAME_SIZE, &signal);
 
             // run classifier
-            EI_IMPULSE_ERROR res = run_classifier(&signal, &result, false);
+            EI_IMPULSE_ERROR res = run_classifier(&signal, &result, true);
             ei_printf("run_classifier returned: %d\n", res);
             if (res != 0) return;
 
@@ -72,12 +96,36 @@ void loop() {
             }
         #if EI_CLASSIFIER_HAS_ANOMALY == 1
             ei_printf("anomaly:\t%.3f\n", result.anomaly);
+            anomalydata = (float)result.anomaly;
+            
         #endif
 
             // reset features frame
             feature_ix = 0;
         }
     }
+  
+}
+
+
+void getWeatherData(WeatherData &data) {
+  ei_impulse_result_t result;
+  // This just generates random data for testing
+  data.anomaly = anomalydata;
+  data.var1 = rand();
+  data.var2 = rand();
+  data.var3 = rand();
+  data.var4 = rand();
+  data.var5 = rand();
+  data.var6 = rand();
+}
+
+void sendWeatherData(const WeatherData &data) {
+
+  snprintf(sendBuf, sizeof(sendBuf), "%d,%d,%d,%d,%d,%d,%d\n",
+      data.anomaly, data.var1, data.var2, data.var3, data.var4, data.var5, data.var6);
+  Serial.print(sendBuf);
+
 }
 
 
@@ -93,3 +141,4 @@ void ei_printf(const char *format, ...) {
         Serial.write(print_buf);
     }
 }
+
